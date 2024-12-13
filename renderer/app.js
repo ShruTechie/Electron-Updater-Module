@@ -3,6 +3,7 @@
 const {ipcRenderer} = require('electron')
 const items = require('./items')
 
+// console.log(process.env.GH_TOKEN, "TOKEN")
 // Dom Nodes
 let showModal = document.getElementById('show-modal'),
     closeModal = document.getElementById('close-modal'),
