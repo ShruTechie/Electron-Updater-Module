@@ -1,0 +1,17 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.adi.electronupdatemodule
+copyright: copyright adi.com
+win:
+  target:
+    - nsis
+    - zip
+  sign: false
+publish:
+  - provider: github
+    owner: ShruTechie
+    repo: Electron-Updater-Module
+    publishAutoUpdate: true
+files: []
+electronVersion: 33.2.1

@@ -1,71 +1,99 @@
-// Modules
-const {app, BrowserWindow, ipcMain, screen} = require('electron')
-const windowStateKeeper = require('electron-window-state')
-const readItem = require('./readItem')
-const appMenu = require('./menu')
+const { app, BrowserWindow, dialog, session } = require('electron');
+const { autoUpdater } = require('electron-updater');
+const log = require('electron-log');
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+log.transports.file.level = 'info';
+log.info('Starting Electron App...');
 
-// Listen for new item request
-ipcMain.on('new-item', (e, itemUrl) => {
+Object.defineProperty(app, 'isPackaged', {
+  get() {
+    return true;
+  }
+});
 
-  // Get new item and send back to renderer
-  readItem( itemUrl, item => {
-    e.sender.send('new-item-success', item)
-  })
-})
+if (true) {
+  autoUpdater.autoDownload = false;
 
-// Create a new BrowserWindow when `app` is ready
-function createWindow () {
+  autoUpdater.setFeedURL({
+    provider: 'generic',
+    url: 'http://127.0.0.1:8080/updateFiles/', 
+  });
 
-  // Win state keeper
-  let state = windowStateKeeper({
-    defaultWidth: 800, defaultHeight: 650
-  })
-
-  mainWindow = new BrowserWindow({ 
-    frame: false,
-    height: screen.getPrimaryDisplay().size.height,
-    minHeight: 600,
-    minWidth: 800,
-    webPreferences: {
-      // --- !! IMPORTANT !! ---
-      // Disable 'contextIsolation' to allow 'nodeIntegration'
-      // 'contextIsolation' defaults to "true" as from Electron v12
-      contextIsolation: false,
-      nodeIntegration: true
-    }
-  })
-
-  // Create main app menu
-  appMenu(mainWindow.webContents)
-
-  // Load index.html into the new BrowserWindow
-  mainWindow.loadFile('renderer/main.html')
-
-  // Manage new window state
-  state.manage(mainWindow)
-
-  // Open DevTools - Remove for PRODUCTION!
-  mainWindow.webContents.openDevTools();
-
-  // Listen for window being closed
-  mainWindow.on('closed',  () => {
-    mainWindow = null
-  })
+  autoUpdater.checkForUpdatesAndNotify();
 }
 
-// Electron `app` is ready
-app.on('ready', createWindow)
+log.info('Current version:', app.getVersion());
 
-// Quit when all windows are closed - (Not macOS - Darwin)
+let mainWindow;
+app.on('ready', () => {
+  log.info('App is ready');
+
+  mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+    },
+  });
+
+  mainWindow.loadFile('./renderer/main.html');
+
+  // mainWindow.webContents.openDevTools();
+
+  autoUpdater.logger = log;
+
+  autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for updates...');
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    log.info('Update available:', info);
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: 'An update is available. The download will start now.',
+    });
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    log.info('No update available:', info);
+  });
+
+  autoUpdater.on('error', (err) => {
+    log.error('Error during auto-update:', err);
+    dialog.showMessageBox({
+      type: 'error',
+      title: 'Update Error',
+      message: 'An error occurred while checking for updates......',
+    });
+  });
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    log.info('Download progress:', progressObj);
+  });
+
+  autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded:', info);
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Ready',
+      message: 'Update has been downloaded and is ready to install. Do you want to install it now?',
+      buttons: ['Yes', 'Later'],
+    }).then(result => {
+      if (result.response === 0) { 
+        autoUpdater.quitAndInstall();
+      }
+    });
+  });
+});
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
-})
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
 
-// When app icon is clicked and app is running, (macOS) recreate the BrowserWindow
-app.on('activate', () => {
-  if (mainWindow === null) createWindow()
-})
+autoUpdater.on('update-available', () => {
+  log.info('Update is available, starting the update download...');
+});

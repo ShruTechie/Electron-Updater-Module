@@ -1,0 +1,8 @@
+version: 1.9.2
+files:
+  - url: electron-updater-module-Setup-1.9.2.exe
+    sha512: icdG2lcS1RNiYD3yyyn4baqTX2QDDFFAYgPiv0ptEHq9E2DfXHwgvqL7/pJlfwMvWpzYOuxH8Bv6aITeLHLQxw==
+    size: 85519864
+path: electron-updater-module-Setup-1.9.2.exe
+sha512: icdG2lcS1RNiYD3yyyn4baqTX2QDDFFAYgPiv0ptEHq9E2DfXHwgvqL7/pJlfwMvWpzYOuxH8Bv6aITeLHLQxw==
+releaseDate: '2024-12-11T13:40:13.909Z'
